@@ -1,0 +1,42 @@
+name: Hourly Sheet Tracker Automation
+
+# This triggers the script every hour AND allows you to click a button to run it manually
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs at minute 0 of every hour (e.g., 1:00, 2:00, 3:00)
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
+
+jobs:
+  update-sheets:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Get the code from the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # 2. Setup Python environment
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # 3. Install Pandas, Gspread, etc.
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    # 4. Create the service_account.json safely from the Secret
+    - name: Create Service Account JSON
+      env:
+        GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+      run: |
+        echo "$GCP_CREDENTIALS" > service_account.json
+
+    # 5. Run the First Script (Meeting Status)
+    - name: Run Meeting Tracker Script
+      run: python meeting_tracker.py
+
+    # 6. Run the Second Script (Closure Status)
+    - name: Run Closure Tracker Script
+      run: python closure_tracker.py
